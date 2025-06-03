@@ -12,7 +12,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.web.Router;
-import io.vertx.grpc.client.GrpcClient;
 import io.vertx.grpc.server.GrpcServer;
 import io.vertx.grpcio.client.GrpcIoClient;
 import io.vertx.grpcio.client.GrpcIoClientChannel;
@@ -83,6 +82,7 @@ public class SalesforceTest {
       .onFailure(testContext::failNow);
   }
 
+  // This test succeeds
   @Test
   void grpc(Vertx vertx, VertxTestContext testContext) {
     final var httpClientOptions = new HttpClientOptions()
@@ -117,6 +117,11 @@ public class SalesforceTest {
     });
   }
 
+  /*
+  This test fails with ClassCastException when creating the stub
+  In line 71 of PubSubGrpcIo https://github.com/yazalulloa/vertx-salesforce/blob/5b74354b6779cf6031e86c8417daf9a556c453f7/src/main/java/com/salesforce/eventbus/protobuf/PubSubGrpcIo.java#L71
+  The given channel is cast to GrpcIoClientChannel and since I'm adding an interceptor, it fails
+  * */
   @Test
   void grpcIo(Vertx vertx, VertxTestContext testContext) {
     final var httpClientOptions = new HttpClientOptions()
@@ -128,8 +133,66 @@ public class SalesforceTest {
     final var channel = new GrpcIoClientChannel(grpcClient, socketAddress);
 
     // Fails with java.lang.ClassCastException: class io.grpc.ClientInterceptors$InterceptorChannel cannot be cast to class io.vertx.grpcio.client.GrpcIoClientChannel (io.grpc.ClientInterceptors$InterceptorChannel and io.vertx.grpcio.client.GrpcIoClientChannel are in unnamed module of loader 'app')
+
     final var pubSubStub = PubSubGrpcIo.newStub(vertx, channel)
       .withInterceptors(new SalesForceHeaderClientInterceptor());
+
+    pubSubStub.getTopic(TopicRequest.newBuilder().setTopicName("some-topic").build())
+      .onSuccess(topicInfo -> {
+        log.info("Received topic info: {}", topicInfo);
+        testContext.completeNow();
+      })
+      .onFailure(testContext::failNow);
+  }
+
+  //This fails because the call credentials is not being invoked
+  @Test
+  void grpcWithCallCredentials(Vertx vertx, VertxTestContext testContext) {
+    final var httpClientOptions = new HttpClientOptions()
+      .setSsl(port == 443)
+      .setUseAlpn(true);
+
+    final var grpcClient = GrpcIoClient.client(vertx, httpClientOptions);
+    final var socketAddress = SocketAddress.inetSocketAddress(port, "localhost");
+    final var channel = new GrpcIoClientChannel(grpcClient, socketAddress);
+
+    final var pubSubStub = PubSubGrpc.newStub(channel)
+      .withCallCredentials(new SalesForceHeaderCallCredentials());
+
+    pubSubStub.getTopic(TopicRequest.newBuilder().setTopicName("some-topic").build(), new StreamObserver<TopicInfo>() {
+      @Override
+      public void onNext(TopicInfo topicInfo) {
+        log.info("Received topic info: {}", topicInfo);
+        testContext.completeNow();
+      }
+
+      @Override
+      public void onError(Throwable throwable) {
+        log.error("Error occurred while fetching topic info", throwable);
+        testContext.failNow(throwable);
+      }
+
+      @Override
+      public void onCompleted() {
+        log.info("Completed fetching topic info");
+        // No action needed here, as we handle the response in onNext
+      }
+    });
+  }
+
+  //This fails because the call credentials is not being invoked
+  @Test
+  void grpcWithCallCredentialsIo(Vertx vertx, VertxTestContext testContext) {
+    final var httpClientOptions = new HttpClientOptions()
+      .setSsl(port == 443)
+      .setUseAlpn(true);
+
+    final var grpcClient = GrpcIoClient.client(vertx, httpClientOptions);
+    final var socketAddress = SocketAddress.inetSocketAddress(port, "localhost");
+    final var channel = new GrpcIoClientChannel(grpcClient, socketAddress);
+
+    final var pubSubStub = PubSubGrpcIo.newStub(vertx, channel)
+      .withCallCredentials(new SalesForceHeaderCallCredentials());
 
     pubSubStub.getTopic(TopicRequest.newBuilder().setTopicName("some-topic").build())
       .onSuccess(topicInfo -> {

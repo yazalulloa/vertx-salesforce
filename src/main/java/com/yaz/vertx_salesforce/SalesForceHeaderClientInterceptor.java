@@ -14,17 +14,18 @@ public class SalesForceHeaderClientInterceptor implements ClientInterceptor {
   @Override
   public <ReqT, RespT> ClientCall<ReqT, RespT> interceptCall(MethodDescriptor<ReqT, RespT> methodDescriptor,
     CallOptions callOptions, Channel channel) {
-    final var extraHeaders = new Metadata();
+
     // This values could come from an async call
-    extraHeaders.put(Constants.SESSION_TOKEN_KEY, UUID.randomUUID().toString());
-    extraHeaders.put(Constants.TENANT_ID_KEY, UUID.randomUUID().toString());
-    extraHeaders.put(Constants.INSTANCE_URL_KEY, UUID.randomUUID().toString());
-    extraHeaders.put(Constants.X_CLIENT_TRACE_ID_KEY, UUID.randomUUID().toString());
+    final var headers = new Metadata();
+    headers.put(Constants.INSTANCE_URL_KEY, UUID.randomUUID().toString());
+    headers.put(Constants.TENANT_ID_KEY, UUID.randomUUID().toString());
+    headers.put(Constants.SESSION_TOKEN_KEY, UUID.randomUUID().toString());
+    headers.put(Constants.X_CLIENT_TRACE_ID_KEY, UUID.randomUUID().toString());
 
     return new SimpleForwardingClientCall<>(channel.newCall(methodDescriptor, callOptions)) {
       @Override
       public void start(Listener<RespT> responseListener, Metadata headers) {
-        headers.merge(extraHeaders);
+        headers.merge(headers);
         super.start(responseListener, headers);
       }
     };
