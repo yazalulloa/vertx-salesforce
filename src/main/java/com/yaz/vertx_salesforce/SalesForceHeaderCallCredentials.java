@@ -17,12 +17,12 @@ public class SalesForceHeaderCallCredentials extends CallCredentials {
     executor.execute(() -> {
 
       // This values could come from an async call
-      final var headers = new Metadata();
-      headers.put(Constants.INSTANCE_URL_KEY, UUID.randomUUID().toString());
-      headers.put(Constants.TENANT_ID_KEY, UUID.randomUUID().toString());
-      headers.put(Constants.SESSION_TOKEN_KEY, UUID.randomUUID().toString());
-      headers.put(Constants.X_CLIENT_TRACE_ID_KEY, UUID.randomUUID().toString());
-      metadataApplier.apply(headers);
+      final var extraHeaders = new Metadata();
+      extraHeaders.put(Constants.INSTANCE_URL_KEY, UUID.randomUUID().toString());
+      extraHeaders.put(Constants.ACCESS_TOKEN_KEY, UUID.randomUUID().toString());
+      extraHeaders.put(Constants.TENANT_ID_KEY, UUID.randomUUID().toString());
+      extraHeaders.put(Constants.X_CLIENT_TRACE_ID_KEY, UUID.randomUUID().toString());
+      metadataApplier.apply(extraHeaders);
     });
   }
 }
