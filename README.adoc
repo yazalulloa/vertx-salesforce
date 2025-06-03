@@ -30,6 +30,6 @@ To run your application:
 
 Vertx impl of salesforce protobuf api
 
-[protobuf file](https://github.com/forcedotcom/pub-sub-api/blob/main/pubsub_api.proto)
+* https://github.com/forcedotcom/pub-sub-api/blob/main/pubsub_api.proto[Salesforce Protobuf file]
 
 
