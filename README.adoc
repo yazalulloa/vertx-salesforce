@@ -28,4 +28,8 @@ To run your application:
 * https://groups.google.com/forum/?fromgroups#!forum/vertx[Vert.x User Group]
 * https://discord.gg/6ry7aqPWXy[Vert.x Discord]
 
+Vertx impl of salesforce protobuf api
+
+[protobuf file](https://github.com/forcedotcom/pub-sub-api/blob/main/pubsub_api.proto)
+
 
