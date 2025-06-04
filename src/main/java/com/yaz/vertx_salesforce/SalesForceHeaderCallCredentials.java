@@ -2,12 +2,19 @@ package com.yaz.vertx_salesforce;
 
 import io.grpc.CallCredentials;
 import io.grpc.Metadata;
+import io.vertx.core.Vertx;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class SalesForceHeaderCallCredentials extends CallCredentials {
+
+  private final Vertx vertx;
+
+  public SalesForceHeaderCallCredentials(Vertx vertx) {
+    this.vertx = vertx;
+  }
 
   @Override
   public void applyRequestMetadata(RequestInfo requestInfo, Executor executor, MetadataApplier metadataApplier) {

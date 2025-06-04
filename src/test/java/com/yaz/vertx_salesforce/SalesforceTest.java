@@ -77,6 +77,12 @@ public class SalesforceTest {
       .listen(port)
       .onSuccess(server -> {
         log.info("HTTP server started on port: {}", server.actualPort());
+      })
+      .flatMap(o -> {
+        return vertx.deployVerticle(new TokenVerticle());
+      })
+      .onSuccess(id -> {
+        log.info("TokenVerticle deployed with ID: {}", id);
         testContext.completeNow();
       })
       .onFailure(testContext::failNow);
@@ -94,7 +100,7 @@ public class SalesforceTest {
     final var channel = new GrpcIoClientChannel(grpcClient, socketAddress);
 
     final var pubSubStub = PubSubGrpc.newStub(channel)
-      .withInterceptors(new SalesForceHeaderClientInterceptor());
+      .withInterceptors(new SalesForceHeaderClientInterceptor(io.vertx.rxjava3.core.Vertx.newInstance(vertx)));
 
     pubSubStub.getTopic(TopicRequest.newBuilder().setTopicName("some-topic").build(), new StreamObserver<TopicInfo>() {
       @Override
@@ -135,7 +141,7 @@ public class SalesforceTest {
     // Fails with java.lang.ClassCastException: class io.grpc.ClientInterceptors$InterceptorChannel cannot be cast to class io.vertx.grpcio.client.GrpcIoClientChannel (io.grpc.ClientInterceptors$InterceptorChannel and io.vertx.grpcio.client.GrpcIoClientChannel are in unnamed module of loader 'app')
 
     final var pubSubStub = PubSubGrpcIo.newStub(vertx, channel)
-      .withInterceptors(new SalesForceHeaderClientInterceptor());
+      .withInterceptors(new SalesForceHeaderClientInterceptor(io.vertx.rxjava3.core.Vertx.newInstance(vertx)));
 
     pubSubStub.getTopic(TopicRequest.newBuilder().setTopicName("some-topic").build())
       .onSuccess(topicInfo -> {
@@ -157,7 +163,7 @@ public class SalesforceTest {
     final var channel = new GrpcIoClientChannel(grpcClient, socketAddress);
 
     final var pubSubStub = PubSubGrpc.newStub(channel)
-      .withCallCredentials(new SalesForceHeaderCallCredentials());
+      .withCallCredentials(new SalesForceHeaderCallCredentials(vertx));
 
     pubSubStub.getTopic(TopicRequest.newBuilder().setTopicName("some-topic").build(), new StreamObserver<TopicInfo>() {
       @Override
@@ -192,7 +198,7 @@ public class SalesforceTest {
     final var channel = new GrpcIoClientChannel(grpcClient, socketAddress);
 
     final var pubSubStub = PubSubGrpcIo.newStub(vertx, channel)
-      .withCallCredentials(new SalesForceHeaderCallCredentials());
+      .withCallCredentials(new SalesForceHeaderCallCredentials(vertx));
 
     pubSubStub.getTopic(TopicRequest.newBuilder().setTopicName("some-topic").build())
       .onSuccess(topicInfo -> {
